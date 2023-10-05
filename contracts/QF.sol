@@ -53,23 +53,11 @@ library QF {
     * @param _project The value to be processed.
     */
     function _calcPower(ProjectValue storage _project) view internal returns(uint256 solution) {
-        solution = (_calcAvgDonation(_project).sqrt()*_project.contributors)**2;
-    }
- 
-
-    /**
-    * @dev calculate a matched amount from the pool.
-    * @param _totalMatchingPoolVolume The value to be processed.
-    */
-    function _calcMatchingVolume(ProjectValue[] storage _projects, uint256 _projectId, uint256 _totalMatchingPoolVolume) view internal returns(uint256 solution) {
-
-        if(_projects[_projectId].contributors != 0) revert EmptyContributors();
-
-        uint256 _totalPower = 0;
-        for(uint256 i = 0; i < _projects.length; i++) {
-            _totalPower += _calcPower(_projects[i]);
+        if(_project.contributors < 1) {
+            solution = 0;
+        } else {
+            solution = (_calcAvgDonation(_project).sqrt()*_project.contributors)**2;
         }
-        solution = (_calcPower(_projects[_projectId])/_totalPower)*_totalMatchingPoolVolume;
     }
 
 
@@ -117,6 +105,12 @@ library QF {
 
         result = matchingPool.set(sender, amount);
         if(!result) revert SetNoSuccessful(sender, amount);
+    }
+
+
+
+    function _distribute(mapping(uint256 => Project) storage projects) view internal returns(uint256 matchingAmount){
+        uint256 result = _calcAvgDonation(projects[1].value);
     }
 
 }
