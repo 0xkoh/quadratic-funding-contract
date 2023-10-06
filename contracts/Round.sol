@@ -10,6 +10,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
+
 contract Round {
 
     using Math for uint256;
@@ -125,9 +126,8 @@ contract Round {
         ERC2612.permit(msg.sender, address(this), _amount, 1200, v, r, s);
         ERC20.transferFrom(msg.sender, address(this), _amount);
 
-        // set state.
         totalMatchingPoolVolume += _amount;
-        result = QF._setMatchingPool(matchingPool ,msg.sender, _amount);
+        result = QF._setPool(matchingPool ,msg.sender, _amount);
     }
 
 

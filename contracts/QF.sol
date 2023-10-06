@@ -5,6 +5,8 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {EnumerableMap} from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 
 
+/// @title A library with generic functions used in Quadratic Funding.
+/// @author @0xkoh on Twitter<X> & Github.
 library QF {
 
     using Math for uint256;
@@ -36,10 +38,8 @@ library QF {
     }
 
 
-    /**
-    * @dev calculate the average donation with a project.
-    * @param _project The value to be processed.
-    */
+    /// @dev Calculates the average amount by dividing totalDonation in ProjectValue by contributors. Used for calculating QF Power for each project.
+    /// @return solution The average donation amount for the project.
     function _calcAvgDonation(ProjectValue storage _project) view internal returns(uint256 solution) {
 
         if (_project.contributors < 1) revert EmptyContributors();
@@ -48,10 +48,9 @@ library QF {
     }
 
 
-    /**
-    * @dev calculate the power of a project.
-    * @param _project The value to be processed.
-    */
+    /// @dev Function to calculate the QF Power to determine the allocation from the Matching Pool held by the Project.
+    /// Calculated using the equation (√avgDonation * contributors)^2.
+    /// @return solution The QF Power of the Project.
     function _calcPower(ProjectValue storage _project) view internal returns(uint256 solution) {
         if(_project.contributors < 1) {
             solution = 0;
@@ -61,11 +60,10 @@ library QF {
     }
 
 
-    /**
-    * @dev This function does something interesting.
-    * @param _project The value to be processed.
-    */
-    function _initialize(Project storage _project, address _sender, bytes32 _content) internal {
+    /// @dev Function to initialize the project by entering the Sender and Content for the Project received in the arguments.
+    /// @param _sender The account that proposed the project.
+    /// @param _content The ipfs hash value where the project's content is registered.
+    function _initialize(Project storage _project, address _sender, bytes32 _content) internal returns(bool) {
 
         if(_project.content != "0x00" && _project.proposer == address(0)) revert AlreadyExistsProject();
         if(_content == "0x00") revert InvalidContent();
@@ -74,43 +72,34 @@ library QF {
         _project.proposer = _sender;
         _project.content = _content;
 
+        return true;
     }
 
 
-    /**
-    * @dev This function does something interesting.
-    * @param _project The value to be processed.
-    */
+    /// @dev Inserts the votes and Donation amount for the Project into a Mapping called donationPool.
+    /// @param _sender The voter.
+    /// @param _amount Donation amount.
     function _voting(Project storage _project, address _sender, uint256 _amount) internal returns(bool result) {
         
         if(_project.content == "0x00") revert NoExistsProject();
         if(_project.donationPool.contains(_sender)) revert AlreadyVoted();
 
-        result = _project.donationPool.set(_sender, _amount);
-        if(!result) revert SetNoSuccessful(_sender, _amount);
-
+        result = _setPool(_project.donationPool, _sender, _amount);
         _project.value.contributors += 1;
         _project.value.totalDonation += _amount;
 
     }
 
 
-    /**
-    * @dev This function does something interesting.
-    * @param matchingPool The value to be processed.
-    */
-    function _setMatchingPool(EnumerableMap.AddressToUintMap storage matchingPool, address sender, uint256 amount) internal returns(bool result) {
-        
-        if(matchingPool.contains(sender)) revert();
+    /// @dev Function to input a value into the matchingPool or donationPool.
+    function _setPool(EnumerableMap.AddressToUintMap storage pool, address sender, uint256 amount) internal returns(bool result) {
+            
+            if(pool.contains(sender)) revert();
+    
+            result = pool.set(sender, amount);
+            if(!result) revert SetNoSuccessful(sender, amount);
 
-        result = matchingPool.set(sender, amount);
-        if(!result) revert SetNoSuccessful(sender, amount);
     }
 
-
-
-    function _distribute(mapping(uint256 => Project) storage projects) view internal returns(uint256 matchingAmount){
-        uint256 result = _calcAvgDonation(projects[1].value);
-    }
 
 }
